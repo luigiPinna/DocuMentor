@@ -1,0 +1,12 @@
+*.yml
+.env
+.ini
+.idea
+
+# Node.js Tools for Visual Studio
+.ntvs_analysis.dat
+node_modules/
+
+# Python Tools for Visual Studio (PTVS)
+__pycache__/
+*.pyc
