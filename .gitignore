@@ -10,3 +10,9 @@ node_modules/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+
+# Logs
+logs/
+
+# Data files
+data/
