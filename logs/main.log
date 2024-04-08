@@ -1,0 +1,5 @@
+
+2024-04-08 22:40:58,612 - DocuMentorLogger - INFO - Informazione generale
+2024-04-08 22:40:58,612 - DocuMentorLogger - WARNING - Avviso: qualcosa non va come previsto
+2024-04-08 22:40:58,612 - DocuMentorLogger - ERROR - Errore: si è verificato un problema
+2024-04-08 22:40:58,612 - DocuMentorLogger - CRITICAL - Critico: problema serio trovato!

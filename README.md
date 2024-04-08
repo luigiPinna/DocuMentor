@@ -1,3 +1,4 @@
+
 ##Problema:
 Sviluppa uno script console che usando llamaindex e i concetti ad alto livello sopra descritti nella immagine (tecniche RAG) proceda a:
 - Ricevere in input una domanda testuale (i.e cosa è owlise)
