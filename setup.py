@@ -11,7 +11,6 @@ class Setup:
         setup.read(yaml_setup_file)
         # File paths
         self.input_kb_folder = setup.get("FILE", "input_kb_folder")
-        self.regolamento_file_path = setup.get("FILE", "regolamento_file_path")
         self.main_log_file_path = setup.get("FILE", "main_log_file_path")
 
         # Ai
