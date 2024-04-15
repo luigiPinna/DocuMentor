@@ -26,7 +26,7 @@ Questo installerà tutte le librerie necessarie elencate in `requirements.txt`.
 
 Il progetto è organizzato come segue:
 
-- `data/`: Contiene il file Excel con i dati dei dipendenti.
+- `data/`: Contiene i file principali.
 - `app/`: Codice sorgente dell'applicazione, diviso in moduli funzionali.
 - `tests/`: Test unitari e di integrazione per il progetto.
 - `docs/`: File vari e documentazione del progetto
@@ -41,8 +41,7 @@ Esempio di file di configurazione:
 ```yaml
 [FILE]
 file_password = xxx
-input_data_file_path_EMEA = xxx
-input_data_file_path_IT = xxx
+file_path = xxxx
 ```
 
 Per avviare l'applicazione, naviga nella directory `app/` e esegui il file 
