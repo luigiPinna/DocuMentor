@@ -33,7 +33,6 @@ class AIService:
             self.logger.info("OpenAI API key set successfully.")
         except Exception as e:
             self.logger.error(f"Failed to set OpenAI API key: {e}")
-            sys.exit(1)
 
     def load_documents_and_create_index(self):
         """Loads documents from the specified directory and creates an index for querying.
@@ -52,7 +51,6 @@ class AIService:
                 self.logger.error("Quota limit exceeded: Please check your plan and billing details.")
             else:
                 self.logger.error(f"Error loading documents or creating index: {e}")
-            sys.exit(1)
 
     def perform_query(self, question):
         """Performs a query against the loaded documents using the provided question.
@@ -70,4 +68,3 @@ class AIService:
             return response
         except Exception as e:
             self.logger.error(f"Error executing query: {e}")
-            sys.exit(1)

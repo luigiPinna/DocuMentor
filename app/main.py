@@ -13,7 +13,6 @@ def main():
     except Exception as e:
         print(f"Error during initial setup: {e}")
         sys.exit(1)
-
     # AIService instance
     ai_service = AIService(my_logger, my_setup)
 

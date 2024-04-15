@@ -6,14 +6,6 @@ Sviluppa uno script console che usando llamaindex e i concetti ad alto livello s
 - Effettui una chiamata a OpenAI o un altro servizio di LLM
 - Risposta in linguaggio naturale
 
-Utilizza Github e condividi un link al repository per procedere nella valutazione della soluzione implementata.
-
-### Criteri di valutazione:
-- Correttezza dell'implementazione.
-- Pulizia e leggibilità del codice.
-- Utilizzo efficace delle tecnologie richieste.
-- Gestione degli errori e degli edge case.
-
 
 ## Prerequisiti
 
