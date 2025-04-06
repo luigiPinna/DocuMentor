@@ -26,8 +26,6 @@ class Setup:
             self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             print(f"ATTENZIONE: Non è stato possibile determinare con certezza la directory del progetto DocuMentor.")
 
-        print(f"Directory base del progetto: {self.base_dir}")
-
         setup = ConfigParser()
 
         # Percorsi possibili per il file di configurazione
@@ -51,7 +49,6 @@ class Setup:
 
         # Leggi il file di configurazione
         setup.read(config_file)
-        print(f"Utilizzando il file di configurazione: {config_file}")
 
         # File paths - sempre relativi alla directory del progetto
         input_kb_folder = setup.get("FILE", "input_kb_folder")
