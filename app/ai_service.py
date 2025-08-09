@@ -1,114 +1,131 @@
 import os
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
-import sys
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.llms.openai import OpenAI
+from typing import Optional
 
 
 class AIService:
-    def __init__(self, logger, setup):
+    """Servizio per gestire le operazioni AI e RAG"""
+
+    def __init__(self, logger, config_manager):
         """
-        Initializes the AI service by setting the OpenAI API key and loading documents to create an index.
+        Inizializza il servizio AI configurando l'API key e caricando i documenti.
 
         Args:
-            logger: The logger object for logging messages.
-            setup: The setup configuration object containing settings and API keys.
-
-        The constructor will terminate the program if setting the API key or loading documents fails.
+            logger: Logger per i messaggi
+            config_manager: ConfigManager per le configurazioni
         """
         self.logger = logger
-        self.setup = setup
-        self.index = None
+        self.config_manager = config_manager
+        self.index: Optional[VectorStoreIndex] = None
         self.query_engine = None
 
-        # Set OpenAI API key using environment variable
-        self.set_api_key()
+        # Configura l'ambiente AI
+        self._setup_ai_environment()
 
-        # Load documents and create index
-        self.load_documents_and_create_index()
+        # Carica documenti e crea l'indice
+        self._load_documents_and_create_index()
 
-    def set_api_key(self):
-        """Sets the OpenAI API key from the setup configuration."""
-        self.logger.info("Setting up OpenAI API key...")
+    def _setup_ai_environment(self) -> None:
+        """Configura l'ambiente AI con API key e modello"""
+        self.logger.info("Configurazione ambiente AI...")
+
         try:
-            # Set API key as environment variable instead of using the client directly
-            os.environ["OPENAI_API_KEY"] = self.setup.openai_api_key
-            self.logger.info("OpenAI API key set successfully.")
+            os.environ["OPENAI_API_KEY"] = self.config_manager.openai_api_key
+
+            # LlamaIndex
+            Settings.llm = OpenAI(
+                model=self.config_manager.ai_model,
+                temperature=self.config_manager.ai_temperature
+            )
+
+            self.logger.info(f"Ambiente AI configurato - Modello: {self.config_manager.ai_model}")
+
         except Exception as e:
-            self.logger.error(f"Failed to set OpenAI API key: {e}")
+            self.logger.error(f"Errore nella configurazione AI: {e}")
+            raise
 
-    def load_documents_and_create_index(self):
-        """Loads documents from the specified directory and creates an index for querying.
+    def _load_documents_and_create_index(self) -> None:
+        """Carica i documenti dalla directory specificata e crea l'indice per le query"""
+        self.logger.info("Caricamento documenti e creazione indice...")
 
-        Logs the process and handles exceptions by logging errors and exiting the program if an error occurs.
-        Specifically handles 'insufficient_quota' errors by logging a message about quota limits.
-        """
-        self.logger.info("Loading documents and creating index...")
         try:
-            # Check if the directory exists and has files
-            if not os.path.exists(self.setup.input_kb_folder):
-                self.logger.error(f"Directory does not exist: {self.setup.input_kb_folder}")
-                return
+            # Verifica che la directory esista
+            if not self.config_manager.input_kb_folder.exists():
+                error_msg = f"Directory non trovata: {self.config_manager.input_kb_folder}"
+                self.logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
 
-            files = [f for f in os.listdir(self.setup.input_kb_folder)
-                     if os.path.isfile(os.path.join(self.setup.input_kb_folder, f))]
+            # Verifica che ci siano file nella directory
+            files = list(self.config_manager.input_kb_folder.glob("*"))
+            files = [f for f in files if f.is_file()]
 
             if not files:
-                self.logger.error(f"No files found in {self.setup.input_kb_folder}")
-                return
+                error_msg = f"Nessun file trovato in {self.config_manager.input_kb_folder}"
+                self.logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
 
-            self.logger.info(f"Found files: {', '.join(files)}")
+            self.logger.info(f"File trovati: {[f.name for f in files]}")
 
-            # Load documents
-            documents = SimpleDirectoryReader(self.setup.input_kb_folder).load_data()
+            # Carica i documenti
+            documents = SimpleDirectoryReader(
+                str(self.config_manager.input_kb_folder)
+            ).load_data()
 
-            # Try to create index - use catch blocks to handle failures
-            try:
-                # Try alternative way to initialize the index
-                from llama_index.core import Settings
-                from llama_index.llms.openai import OpenAI
+            if not documents:
+                error_msg = "Nessun documento valido caricato"
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
 
-                # Configure settings explicitly to avoid proxies issue
-                Settings.llm = OpenAI(model="gpt-3.5-turbo")
+            # Crea l'indice
+            self.index = VectorStoreIndex.from_documents(documents)
+            self.query_engine = self.index.as_query_engine()
 
-                self.index = VectorStoreIndex.from_documents(documents)
-                self.query_engine = self.index.as_query_engine()
-                self.logger.info("Documents loaded and index created successfully.")
-            except Exception as e:
-                self.logger.error(f"Error creating index with settings: {e}")
-                # Fallback to direct creation
-                try:
-                    self.index = VectorStoreIndex.from_documents(documents)
-                    self.query_engine = self.index.as_query_engine()
-                    self.logger.info("Documents loaded and index created successfully (fallback).")
-                except Exception as inner_e:
-                    self.logger.error(f"Error creating index (fallback): {inner_e}")
+            self.logger.info(f"Indice creato con successo - {len(documents)} documenti processati")
 
         except Exception as e:
-            if "insufficient_quota" in str(e):
-                self.logger.error("Quota limit exceeded: Please check your plan and billing details.")
-            else:
-                self.logger.error(f"Error loading documents or creating index: {e}")
+            error_msg = f"Errore durante il caricamento documenti: {e}"
+            self.logger.error(error_msg)
 
-    def perform_query(self, question):
-        """Performs a query against the loaded documents using the provided question.
+            # Gestione specifica per errori di quota OpenAI
+            if "insufficient_quota" in str(e).lower():
+                self.logger.error("Quota OpenAI esaurita - Verifica il piano e la fatturazione")
+
+            raise
+
+    def perform_query(self, question: str) -> str:
+        """
+        Esegue una query sui documenti caricati.
 
         Args:
-            question: The user's question to query against the document index.
+            question: Domanda dell'utente
 
         Returns:
-            The response from the query engine or error message.
-        """
-        self.logger.info("Performing a query on the index...")
-        try:
-            # Check if index was properly created
-            if self.query_engine is None:
-                error_msg = "Unable to answer query because the document index was not properly created."
-                self.logger.error(error_msg)
-                return error_msg
+            Risposta del sistema AI
 
+        Raises:
+            ValueError: Se l'indice non è stato creato correttamente
+            Exception: Per altri errori durante l'esecuzione della query
+        """
+        if not question or not question.strip():
+            raise ValueError("La domanda non può essere vuota")
+
+        self.logger.info(f"Esecuzione query: {question[:100]}...")
+
+        try:
+            # Verifica che l'indice sia stato creato
+            if self.query_engine is None:
+                error_msg = "Impossibile eseguire la query: indice non inizializzato"
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Esegui la query
             response = self.query_engine.query(question)
-            self.logger.info("Query executed successfully")
-            return response
+
+            self.logger.info("Query eseguita con successo")
+            return str(response)
+
         except Exception as e:
-            error_msg = f"Error executing query: {e}"
+            error_msg = f"Errore durante l'esecuzione della query: {e}"
             self.logger.error(error_msg)
-            return f"Sorry, I encountered an error: {e}"
+            raise

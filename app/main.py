@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 DocuMentor - Assistente documentale basato su AI
 Modulo principale dell'applicazione che gestisce l'inizializzazione e il flusso dell'applicazione.
@@ -6,23 +5,23 @@ Modulo principale dell'applicazione che gestisce l'inizializzazione e il flusso 
 
 import sys
 from typing import Optional
-from setup import Setup
+from config_manager import ConfigManager
 from logger import Logger
 from ai_service import AIService
 
 
-def initialize_system() -> tuple[Optional[Setup], Optional[Logger]]:
+def initialize_system() -> tuple[Optional[ConfigManager], Optional[Logger]]:
     """
-    Inizializza il sistema configurando setup e logger.
+    Inizializza il sistema configurando config manager e logger.
 
     Returns:
-        tuple: (Setup, Logger) se l'inizializzazione ha successo, altrimenti (None, None)
+        tuple: (ConfigManager, Logger) se l'inizializzazione ha successo, altrimenti (None, None)
     """
     try:
-        my_setup = Setup()
-        my_logger = Logger('DocuMentorLogger', log_file=my_setup.main_log_file_path).get_logger()
-        my_logger.info("DocuMentor starting...")
-        return my_setup, my_logger
+        config_manager = ConfigManager()
+        logger = Logger('DocuMentorLogger', log_file=config_manager.main_log_file_path).get_logger()
+        logger.info("DocuMentor starting...")
+        return config_manager, logger
     except Exception as e:
         print(f"Errore durante l'inizializzazione: {e}")
         return None, None
@@ -32,13 +31,13 @@ def main():
     """Funzione principale dell'applicazione DocuMentor."""
 
     # Inizializzazione del sistema
-    my_setup, my_logger = initialize_system()
-    if not my_setup or not my_logger:
+    config_manager, logger = initialize_system()
+    if not config_manager or not logger:
         sys.exit(1)
 
     try:
         # Inizializzazione del servizio AI
-        ai_service = AIService(my_logger, my_setup)
+        ai_service = AIService(logger, config_manager)
 
         # Loop principale per gestire più domande
         while True:
@@ -47,7 +46,7 @@ def main():
 
             # Controllo per uscire dal programma
             if question.lower() in ['exit', 'quit', 'q', 'esci']:
-                my_logger.info("Uscita richiesta dall'utente")
+                logger.info("Uscita richiesta dall'utente")
                 print("Grazie per aver usato DocuMentor. Arrivederci!")
                 break
 
@@ -56,7 +55,7 @@ def main():
                 continue
 
             # Registrazione della domanda
-            my_logger.info(f"Domanda ricevuta: {question}")
+            logger.info(f"Domanda ricevuta: {question}")
 
             # Esecuzione della query e gestione errori
             try:
@@ -66,21 +65,21 @@ def main():
                 print(response)
             except Exception as e:
                 error_msg = f"Errore durante l'elaborazione della domanda: {e}"
-                my_logger.error(error_msg)
+                logger.error(error_msg)
                 print(f"Si è verificato un errore: {e}")
 
     except KeyboardInterrupt:
         print("\nOperazione interrotta dall'utente.")
-        my_logger.info("Interruzione da tastiera rilevata")
+        logger.info("Interruzione da tastiera rilevata")
     except Exception as e:
         error_msg = f"Errore imprevisto: {e}"
-        if my_logger:
-            my_logger.critical(error_msg)
+        if logger:
+            logger.critical(error_msg)
         print(error_msg)
     finally:
         # Pulizia finale
-        if my_logger:
-            my_logger.info("DocuMentor terminato")
+        if logger:
+            logger.info("DocuMentor terminato")
         print("\nDocuMentor chiuso correttamente.")
 
 
