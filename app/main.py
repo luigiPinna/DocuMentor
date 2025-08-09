@@ -5,7 +5,7 @@ Modulo principale dell'applicazione che gestisce l'inizializzazione e il flusso 
 
 import sys
 from typing import Optional
-from config_manager import ConfigManager
+from app.config.config_manager import ConfigManager
 from logger import Logger
 from ai_service import AIService
 
